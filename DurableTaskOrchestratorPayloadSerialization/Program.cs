@@ -10,9 +10,6 @@ var host = new HostBuilder()
         services.Configure<JsonSerializerOptions>(options =>
         {
             options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-            options.PropertyNameCaseInsensitive = true;
-            options.NumberHandling = JsonNumberHandling.AllowReadingFromString;
-            options.Converters.Add(new JsonStringEnumConverter());
         });
     })
     .Build();
