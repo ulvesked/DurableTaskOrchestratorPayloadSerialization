@@ -17,7 +17,7 @@ namespace DurableTaskOrchestratorPayloadSerialization
         }
 
         [Function("Function1")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req, [DurableClient] DurableTaskClient durableTaskClient)
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req, [DurableClient] DurableTaskClient durableTaskClient)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
@@ -29,17 +29,19 @@ namespace DurableTaskOrchestratorPayloadSerialization
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
 
             _logger.LogInformation("Executing orchestrator with fromDate {fromDate} and toDate {toDate}", fromDate, toDate);
 
-            durableTaskClient.ScheduleNewMyOrchestratorInstanceAsync(new MyOrchestratorParameters
+           var orchestration = await durableTaskClient.ScheduleNewMyOrchestratorInstanceAsync(new MyOrchestratorParameters
             {
                 FromDate = fromDate,
                 ToDate = toDate
             });
 
-            response.WriteString("Welcome to Azure Functions!");
+            var result = await durableTaskClient.WaitForInstanceCompletionAsync(orchestration, true, req.FunctionContext.CancellationToken);
+            
+            response.WriteString(result.SerializedOutput);
 
             return response;
         }
